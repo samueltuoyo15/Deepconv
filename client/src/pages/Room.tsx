@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Copy, Share2 } from "lucide-react"
 
-import getSocket from "../utils/socket-connection"
+import getSocket from "../utils/websocket-connection"
 import { useRoomStore } from '../store/useRoomStore'
 
 import RoomChat from '../Components/RoomChat'
@@ -90,7 +90,10 @@ const Room = () => {
       }
     } else {
       try {
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ 
+          video: true,
+          audio: false
+        })
         screenStreamRef.current = displayStream
         setIsScreenSharing(true)
         
@@ -205,78 +208,66 @@ const Room = () => {
   useEffect(() => {
     let ignore = false
     
-    let storedName = localStorage.getItem("userName")
-    if (!storedName) {
-       storedName = window.prompt("Enter your name", `Guest-${Math.floor(Math.random() * 1000)}`) || `Guest-${Math.floor(Math.random() * 1000)}`
-       localStorage.setItem("userName", storedName)
-    }
-    setUserName(storedName)
-
     const initializeRoom = async () => {
+      let storedName = localStorage.getItem("userName")
+      if (!storedName) {
+         storedName = window.prompt("Enter your name", `Guest-${Math.floor(Math.random() * 1000)}`) || `Guest-${Math.floor(Math.random() * 1000)}`
+         localStorage.setItem("userName", storedName)
+      }
+      setUserName(storedName)
+
       await setupMediaDevices()
       if (ignore) return
       
-      const socket = await getSocket(roomId)
-      if (ignore) {
-        socket.disconnect()
-        return
-      }
-      
-      socketRef.current = socket
+      try {
+        const socket = await getSocket(roomId)
+        if (ignore) {
+          socket.disconnect()
+          return
+        }
+        
+        socketRef.current = socket
 
-      socket.on("existing-users", (users: {id: string, name: string}[]) => {
-        setParticipantCount(users.length + 1)
-        const ids = users.map(u => u.id)
-        const nameMap: Record<string, string> = {}
-        users.forEach(u => nameMap[u.id] = u.name)
-        
-        setParticipantIds(ids)
-        setParticipantNames(prev => ({...prev, ...nameMap}))
-        
-        users.forEach(async (user) => {
-          const pc = createPeerConnection(user.id)
-          peerConnections.current.set(user.id, pc)
-          const offer = await pc.createOffer()
-          await pc.setLocalDescription(offer)
-          socket.emit("offer", {
-            to: user.id,
-            offer
+        socket.on("existing-users", (users: {id: string, name: string}[]) => {
+          setParticipantCount(users.length + 1)
+          const ids = users.map(u => u.id)
+          const nameMap: Record<string, string> = {}
+          users.forEach(u => nameMap[u.id] = u.name)
+          
+          setParticipantIds(ids)
+          setParticipantNames(prev => ({...prev, ...nameMap}))
+          
+          users.forEach(async (user) => {
+            const pc = createPeerConnection(user.id)
+            peerConnections.current.set(user.id, pc)
+            const offer = await pc.createOffer()
+            await pc.setLocalDescription(offer)
+            socket.emit("offer", {
+              to: user.id,
+              offer
+            })
           })
         })
-      })
 
-      socket.on("user-connected", (user: {id: string, name: string}) => {
-        setParticipantCount(prev => prev + 1)
-        setParticipantIds(prev => [...prev, user.id])
-        setParticipantNames(prev => ({...prev, [user.id]: user.name}))
-      })
-
-      socket.on("offer", async ({ from, offer }) => {
-        if (!peerConnections.current.has(from)) {
-          const pc = createPeerConnection(from)
-          peerConnections.current.set(from, pc)
-        }
-        const pc = peerConnections.current.get(from)!
-        await pc.setRemoteDescription(new RTCSessionDescription(offer))
-        const answer = await pc.createAnswer()
-        await pc.setLocalDescription(answer)
-        socket.emit("answer", {
-          to: from,
-          answer
+        socket.on("user-connected", (user: {id: string, name: string}) => {
+          setParticipantCount(prev => prev + 1)
+          setParticipantIds(prev => [...prev, user.id])
+          setParticipantNames(prev => ({...prev, [user.id]: user.name}))
         })
-        const queuedCandidates = iceCandidateQueue.current.get(from) || []
-        for (const candidate of queuedCandidates) {
-          try {
-            await pc.addIceCandidate(candidate)
-          } catch (e) {}
-        }
-        iceCandidateQueue.current.delete(from)
-      })
 
-      socket.on("answer", async ({ from, answer }) => {
-        const pc = peerConnections.current.get(from)
-        if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(answer))
+        socket.on("offer", async ({ from, offer }) => {
+          if (!peerConnections.current.has(from)) {
+            const pc = createPeerConnection(from)
+            peerConnections.current.set(from, pc)
+          }
+          const pc = peerConnections.current.get(from)!
+          await pc.setRemoteDescription(new RTCSessionDescription(offer))
+          const answer = await pc.createAnswer()
+          await pc.setLocalDescription(answer)
+          socket.emit("answer", {
+            to: from,
+            answer
+          })
           const queuedCandidates = iceCandidateQueue.current.get(from) || []
           for (const candidate of queuedCandidates) {
             try {
@@ -284,50 +275,67 @@ const Room = () => {
             } catch (e) {}
           }
           iceCandidateQueue.current.delete(from)
-        }
-      })
-
-      socket.on("candidate", async ({ from, candidate }) => {
-        const pc = peerConnections.current.get(from)
-        if (pc && candidate) {
-          if (pc.remoteDescription) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(candidate))
-            } catch (e) {}
-          } else {
-            if (!iceCandidateQueue.current.has(from)) {
-              iceCandidateQueue.current.set(from, [])
-            }
-            iceCandidateQueue.current.get(from)!.push(new RTCIceCandidate(candidate))
-          }
-        }
-      })
-
-      socket.on("user-disconnected", (userId: string) => {
-        setParticipantCount(prev => prev - 1)
-        setParticipantIds(prev => prev.filter(id => id !== userId))
-        setHandRaises(prev => {
-          const newHandles = {...prev}
-          delete newHandles[userId]
-          return newHandles
         })
-        peerConnections.current.get(userId)?.close()
-        peerConnections.current.delete(userId)
-        delete remoteVideosRef.current[userId]
-      })
 
-      socket.on("hand-raise", ({ from, isRaised }) => {
-        setHandRaises(prev => ({ ...prev, [from]: isRaised }))
-      })
+        socket.on("answer", async ({ from, answer }) => {
+          const pc = peerConnections.current.get(from)
+          if (pc) {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer))
+            const queuedCandidates = iceCandidateQueue.current.get(from) || []
+            for (const candidate of queuedCandidates) {
+              try {
+                await pc.addIceCandidate(candidate)
+              } catch (e) {}
+            }
+            iceCandidateQueue.current.delete(from)
+          }
+        })
 
-      socket.on("chat-message", ({ from, message, type, fileName }) => {
-        setMessages(prev => [
-            ...prev, 
-            { sender: from, text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}), type: type || 'text', fileName }
-        ])
-      })
+        socket.on("candidate", async ({ from, candidate }) => {
+          const pc = peerConnections.current.get(from)
+          if (pc && candidate) {
+            if (pc.remoteDescription) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate))
+              } catch (e) {}
+            } else {
+              if (!iceCandidateQueue.current.has(from)) {
+                iceCandidateQueue.current.set(from, [])
+              }
+              iceCandidateQueue.current.get(from)!.push(new RTCIceCandidate(candidate))
+            }
+          }
+        })
 
-      socket.emit("join", { roomId, name: storedName })
+        socket.on("user-disconnected", (userId: string) => {
+          setParticipantCount(prev => prev - 1)
+          setParticipantIds(prev => prev.filter(id => id !== userId))
+          setHandRaises(prev => {
+            const newHandles = {...prev}
+            delete newHandles[userId]
+            return newHandles
+          })
+          peerConnections.current.get(userId)?.close()
+          peerConnections.current.delete(userId)
+          delete remoteVideosRef.current[userId]
+        })
+
+        socket.on("hand-raise", ({ from, isRaised }) => {
+          setHandRaises(prev => ({ ...prev, [from]: isRaised }))
+        })
+
+        socket.on("chat-message", ({ from, message, type, fileName }) => {
+          setMessages(prev => [
+              ...prev, 
+              { sender: from, text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}), type: type || 'text', fileName }
+          ])
+        })
+
+        socket.emit("join", { roomId, name: storedName })
+      } catch (error) {
+        console.error("Failed to connect:", error)
+        alert("Failed to connect to server. Please try again.")
+      }
     }
 
     initializeRoom()
@@ -342,13 +350,13 @@ const Room = () => {
   }, [roomId])
 
   return (
-    <section className="bg-[#121212] flex flex-col font-sans relative overflow-hidden h-screen w-screen">
-      <header className="absolute top-0 w-full p-4 flex justify-between items-center z-10 bg-gradient-to-b from-[#121212]/80 to-transparent">
-        <div className="flex items-center gap-2 bg-[#1c1c1c]/80 backdrop-blur-md px-4 py-2 rounded-full border border-[#333] text-white">
+    <section className="bg-[#121212] flex flex-col font-sans relative overflow-hidden h-screen w-screen" onContextMenu={(e) => e.preventDefault()}>
+      <header className="absolute top-0 w-full p-4 flex justify-between items-center z-10 bg-gradient-to-b from-[#121212]/80 to-transparent pointer-events-none">
+        <div className="flex items-center gap-2 bg-[#1c1c1c]/80 backdrop-blur-md px-4 py-2 rounded-full border border-[#333] text-white pointer-events-auto">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           <span className="text-sm font-semibold">{participantCount > 1 ? `${participantCount} Participants` : "Waiting for others..."}</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 pointer-events-auto">
           <button onClick={() => navigator.clipboard.writeText(roomId)} className="p-2 text-white bg-[#1c1c1c]/80 backdrop-blur-md hover:bg-[#2a2a2a] border border-[#333] rounded-full transition">
             <Copy size={20} />
           </button>

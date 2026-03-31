@@ -3,9 +3,35 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+body {
+  overflow: hidden;
+}
+
 @layer utilities {
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 

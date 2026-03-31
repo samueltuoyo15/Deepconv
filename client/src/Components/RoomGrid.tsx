@@ -66,19 +66,20 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
   }
 
   return (
-    <div className={`flex-1 p-4 lg:p-8 flex items-center justify-center pt-20 pb-32 md:pb-28 ${isChatOpen ? 'md:pr-[26rem]' : ''} transition-all overflow-hidden`}>
-      <div className={`grid gap-4 w-full h-full max-h-[85vh] ${
+    <div className={`flex-1 flex items-center justify-center transition-all overflow-hidden ${isChatOpen ? 'pr-0 md:pr-[22rem]' : 'pr-0'}`} style={{ paddingTop: '5rem', paddingBottom: '7rem', paddingLeft: '1rem', paddingRight: isChatOpen ? 'clamp(1rem, 22rem, 22rem)' : '1rem' }}>
+      <div className={`grid gap-3 md:gap-4 w-full h-full ${
         participantIds.length === 0 ? 'grid-cols-1 max-w-4xl' :
-        participantIds.length === 1 ? 'grid-cols-1 md:grid-cols-2 max-w-6xl' :
-        participantIds.length === 2 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' :
-        'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+        participantIds.length === 1 ? 'grid-cols-1 sm:grid-cols-2 max-w-6xl' :
+        participantIds.length === 2 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' :
+        'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
       }`}>
         
         {/* Local Video */}
-        <div className={popoutStates['local'] ? "fixed z-50 w-72 md:w-96 aspect-video bg-[#1c1c1c] cursor-move shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border-2 border-[#0B5CFF] resize overflow-auto" : "relative bg-[#1c1c1c] rounded-xl overflow-hidden aspect-[3/4] md:aspect-video shadow-2xl transition-all border border-[#333]"}
+        <div className={popoutStates['local'] ? "fixed z-50 w-72 md:w-96 bg-[#1c1c1c] cursor-move shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border-2 border-[#0B5CFF]" : "relative bg-[#1c1c1c] rounded-xl overflow-hidden aspect-video shadow-2xl transition-all border border-[#333]"}
             style={popoutStates['local'] ? { 
                 left: drags['local']?.x ?? (typeof window !== 'undefined' ? window.innerWidth/2 - 192 : 50), 
-                top: drags['local']?.y ?? (typeof window !== 'undefined' ? window.innerHeight/2 - 100 : 50) 
+                top: drags['local']?.y ?? (typeof window !== 'undefined' ? window.innerHeight/2 - 100 : 50),
+                aspectRatio: '16/9'
             } : {}}
             onPointerDown={(e) => {
                 initLocalPos('local', window.innerWidth/2 - 192, window.innerHeight/2 - 100)
@@ -117,28 +118,28 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
           />
           {!isVideoOn && !isScreenSharing && (
             <div className="absolute inset-0 flex items-center justify-center bg-[#1c1c1c]">
-              <img src="/avatars/user1.png" alt="Avatar" className="w-32 h-32 rounded-full shadow-2xl border-4 border-[#333]" />
+              <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="Avatar" className="w-32 h-32 rounded-full shadow-2xl border-4 border-[#333]" />
             </div>
           )}
           {isScreenSharing && (
-            <div className="absolute top-4 right-4 bg-[#0B5CFF] px-3 py-1 rounded-full text-white text-xs font-bold shadow-lg animate-pulse z-20">
+            <div className="absolute top-4 right-4 bg-[#0B5CFF] px-3 py-1 rounded-full text-white text-xs font-bold shadow-lg animate-pulse z-20 pointer-events-none">
               Presenting
             </div>
           )}
           {isHandRaised && (
-            <div className="absolute top-14 right-4 bg-[#1c1c1c]/80 backdrop-blur-sm p-2 rounded-xl text-yellow-500 shadow-lg border border-[#333] animate-pulse">
+            <div className="absolute top-14 right-4 bg-[#1c1c1c]/80 backdrop-blur-sm p-2 rounded-xl text-yellow-500 shadow-lg border border-[#333] animate-pulse pointer-events-none">
               <Hand size={24} fill="currentColor" />
             </div>
           )}
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-            <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333]">
-              <img src="/avatars/user1.png" alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
+            <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333] text-white">
+              <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
               <span>{userName} (You)</span>
               {!isMicOn && <MicOff size={14} className="text-red-400"/>}
             </div>
           </div>
           {popoutStates['local'] && (
-              <div className="absolute bottom-1 right-1 pointer-events-none opacity-50 bg-[#121212] p-0.5 rounded">
+              <div className="absolute bottom-1 right-1 pointer-events-none opacity-50 bg-[#121212] p-0.5 rounded text-white">
                  <Move size={12} />
               </div>
           )}
@@ -147,10 +148,11 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
         {/* Remote Videos */}
         {participantIds.map((id) => (
           <div key={id} 
-            className={popoutStates[id] ? "fixed z-50 w-72 md:w-96 aspect-video bg-[#1c1c1c] cursor-move shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border-2 border-[#0B5CFF] resize overflow-auto" : "relative bg-[#1c1c1c] rounded-xl overflow-hidden aspect-[3/4] md:aspect-video shadow-2xl transition-all border border-[#333]"}
+            className={popoutStates[id] ? "fixed z-50 w-72 md:w-96 bg-[#1c1c1c] cursor-move shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden border-2 border-[#0B5CFF]" : "relative bg-[#1c1c1c] rounded-xl overflow-hidden aspect-video shadow-2xl transition-all border border-[#333]"}
             style={popoutStates[id] ? { 
                 left: drags[id]?.x ?? (typeof window !== 'undefined' ? window.innerWidth/2 - 192 : 50), 
-                top: drags[id]?.y ?? (typeof window !== 'undefined' ? window.innerHeight/2 - 100 : 50) 
+                top: drags[id]?.y ?? (typeof window !== 'undefined' ? window.innerHeight/2 - 100 : 50),
+                aspectRatio: '16/9'
             } : {}}
             onPointerDown={(e) => {
                 initLocalPos(id, window.innerWidth/2 - 192, window.innerHeight/2 - 100)
@@ -188,18 +190,18 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
               className="w-full h-full object-cover pointer-events-none"
             />
             {handRaises[id] && (
-              <div className="absolute top-4 right-4 bg-[#1c1c1c]/80 backdrop-blur-sm p-2 rounded-xl text-yellow-500 shadow-lg border border-[#333] animate-pulse">
+              <div className="absolute top-4 right-4 bg-[#1c1c1c]/80 backdrop-blur-sm p-2 rounded-xl text-yellow-500 shadow-lg border border-[#333] animate-pulse pointer-events-none">
                 <Hand size={24} fill="currentColor" />
               </div>
             )}
             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-              <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333]">
-                <img src={`https://api.dicebear.com/9.x/micah/svg?seed=${participantNames[id] || id}&backgroundColor=2a2a2a`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
+              <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333] text-white">
+                <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${participantNames[id] || id}&backgroundColor=2a2a2a`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
                 <span>{participantNames[id] || "Participant"}</span>
               </div>
             </div>
             {popoutStates[id] && (
-                <div className="absolute bottom-1 right-1 pointer-events-none opacity-50 bg-[#121212] p-0.5 rounded">
+                <div className="absolute bottom-1 right-1 pointer-events-none opacity-50 bg-[#121212] p-0.5 rounded text-white">
                    <Move size={12} />
                 </div>
             )}
