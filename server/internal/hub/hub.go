@@ -17,12 +17,21 @@ type Client struct {
 }
 
 type Hub struct {
-	Clients    map[string]*Client
-	Rooms      map[string]map[string]*Client
-	Register   chan *Client
-	Unregister chan *Client
-	Broadcast  chan *BroadcastMessage
-	Mu         sync.RWMutex
+	Clients      map[string]*Client
+	Rooms        map[string]map[string]*Client
+	RoomMessages map[string][]ChatMessage
+	Register     chan *Client
+	Unregister   chan *Client
+	Broadcast    chan *BroadcastMessage
+	Mu           sync.RWMutex
+}
+
+type ChatMessage struct {
+	From     string `json:"from"`
+	Message  string `json:"message"`
+	Type     string `json:"type"`
+	FileName string `json:"fileName"`
+	Time     int64  `json:"time"`
 }
 
 type BroadcastMessage struct {
@@ -33,11 +42,12 @@ type BroadcastMessage struct {
 
 func NewHub() *Hub {
 	return &Hub{
-		Clients:    make(map[string]*Client),
-		Rooms:      make(map[string]map[string]*Client),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		Broadcast:  make(chan *BroadcastMessage, 256),
+		Clients:      make(map[string]*Client),
+		Rooms:        make(map[string]map[string]*Client),
+		RoomMessages: make(map[string][]ChatMessage),
+		Register:     make(chan *Client),
+		Unregister:   make(chan *Client),
+		Broadcast:    make(chan *BroadcastMessage, 256),
 	}
 }
 
@@ -60,6 +70,7 @@ func (h *Hub) Run() {
 						delete(room, client.ID)
 						if len(room) == 0 {
 							delete(h.Rooms, roomID)
+							delete(h.RoomMessages, roomID)
 						}
 					}
 				}
@@ -131,6 +142,30 @@ func (h *Hub) SendToClient(clientID string, message []byte) {
 		case client.Send <- message:
 		default:
 		}
+	}
+}
+
+func (h *Hub) GetRoomMessages(roomID string) []ChatMessage {
+	h.Mu.RLock()
+	defer h.Mu.RUnlock()
+
+	if messages, ok := h.RoomMessages[roomID]; ok {
+		return messages
+	}
+	return []ChatMessage{}
+}
+
+func (h *Hub) AddRoomMessage(roomID string, message ChatMessage) {
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	if h.RoomMessages[roomID] == nil {
+		h.RoomMessages[roomID] = make([]ChatMessage, 0)
+	}
+	h.RoomMessages[roomID] = append(h.RoomMessages[roomID], message)
+	
+	if len(h.RoomMessages[roomID]) > 100 {
+		h.RoomMessages[roomID] = h.RoomMessages[roomID][1:]
 	}
 }
 

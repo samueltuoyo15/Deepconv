@@ -2,8 +2,10 @@ import { io, Socket } from "socket.io-client"
 
 const getSocket = (roomId: string): Promise<Socket> => {
   return new Promise((resolve, reject) => {
-    const socket = io(import.meta.env.VITE_BASE_URL || "http://localhost:10000", {
+    const baseUrl = import.meta.env.VITE_BASE_URL || window.location.origin || "http://localhost:10000"
+    const socket = io(baseUrl, {
       query: { roomId },
+      transports: ["websocket"]
     })
 
     socket.on("connect", () => {

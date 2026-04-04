@@ -51,7 +51,7 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
   }
 
   return (
-    <div className="fixed top-4 right-4 w-[calc(100vw-2rem)] sm:w-[22rem] md:w-80 lg:w-[21rem] bg-[#1c1c1c]/95 backdrop-blur-3xl rounded-xl p-4 md:p-5 flex flex-col border border-[#333] z-40 shadow-2xl animate-slide-up" style={{ maxHeight: 'calc(100vh - 8rem)', height: 'calc(100vh - 8rem)' }}>
+    <div className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[22rem] md:w-80 lg:w-[21rem] bg-[#1c1c1c]/95 backdrop-blur-3xl rounded-xl p-4 md:p-5 flex flex-col border border-[#333] z-40 shadow-2xl animate-slide-up" style={{ top: '6rem', bottom: '7rem', maxHeight: 'calc(100vh - 13rem)', height: 'calc(100vh - 13rem)' }}>
       <div className="flex justify-between items-center mb-4 md:mb-6 pl-2 pr-1 shrink-0">
         <h3 className="font-extrabold text-lg md:text-xl tracking-tight text-white">Room Chat</h3>
         <div className="flex items-center gap-2">

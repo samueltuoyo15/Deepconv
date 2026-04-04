@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react"
 import { Link as RouterLink } from "react-router-dom"
 import { Video, X, Copy, Share2, Plus, Terminal } from "lucide-react"
 import JoinMeet from "../Components/JoinMeet"
-import Header from "../Components/Header"
 import { v4 as uuidv4 } from "uuid"
 
 const CreateMeet = () => {
@@ -40,9 +39,7 @@ const CreateMeet = () => {
 
   return (
     <div className="bg-[#121212] min-h-screen text-white font-sans overflow-hidden flex">
-      <Header />
-      
-      <main className="flex-1 md:ml-20 flex flex-col p-4 md:p-8 pt-24 md:pt-8 items-center justify-center w-full min-h-screen">
+      <main className="flex-1 flex flex-col p-4 md:p-8 items-center justify-center w-full min-h-screen">
         
         <div className="max-w-2xl w-full flex flex-col items-center justify-center -mt-10">
           

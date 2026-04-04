@@ -171,6 +171,16 @@ func (wsh *WebSocketHandler) handleJoin(client *hub.Client, data interface{}) {
 	responseBytes, _ := json.Marshal(response)
 	client.Send <- responseBytes
 
+	roomMessages := wsh.hub.GetRoomMessages(payload.RoomID)
+	if len(roomMessages) > 0 {
+		historyResponse := models.SocketMessage{
+			Event: "chat-history",
+			Data:  roomMessages,
+		}
+		historyBytes, _ := json.Marshal(historyResponse)
+		client.Send <- historyBytes
+	}
+
 	client.Mu.RLock()
 	userConnected := models.SocketMessage{
 		Event: "user-connected",
@@ -263,6 +273,15 @@ func (wsh *WebSocketHandler) handleChatMessage(client *hub.Client, data interfac
 	if err := json.Unmarshal(dataBytes, &payload); err != nil {
 		return
 	}
+
+	chatMsg := hub.ChatMessage{
+		From:     client.ID,
+		Message:  payload.Message,
+		Type:     payload.Type,
+		FileName: payload.FileName,
+		Time:     time.Now().UnixMilli(),
+	}
+	wsh.hub.AddRoomMessage(payload.RoomID, chatMsg)
 
 	response := models.SocketMessage{
 		Event: "chat-message",

@@ -45,14 +45,21 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	r.GET("/", func(c *gin.Context) {
+	r.GET("/ws", wsHandler.HandleWebSocket)
+
+	r.GET("/api/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "Server is running",
 			"status":  "ok",
 		})
 	})
 
-	r.GET("/ws", wsHandler.HandleWebSocket)
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Server is running",
+			"status":  "ok",
+		})
+	})
 
 	log.Printf("Server starting on port %s", port)
 	if err := r.Run(":" + port); err != nil {

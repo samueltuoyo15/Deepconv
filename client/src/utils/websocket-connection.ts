@@ -7,7 +7,6 @@ class WebSocketConnection {
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
-  public id: string = ""
 
   constructor(url: string) {
     this.url = url
@@ -19,7 +18,6 @@ class WebSocketConnection {
         this.ws = new WebSocket(this.url)
 
         this.ws.onopen = () => {
-          console.log("WebSocket connected")
           this.reconnectAttempts = 0
           resolve()
         }
@@ -43,7 +41,6 @@ class WebSocketConnection {
         }
 
         this.ws.onclose = () => {
-          console.log("WebSocket disconnected")
           this.handleReconnect()
         }
       } catch (error) {
@@ -55,7 +52,6 @@ class WebSocketConnection {
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++
-      console.log(`Reconnecting... Attempt ${this.reconnectAttempts}`)
       setTimeout(() => {
         this.connect().catch(console.error)
       }, this.reconnectDelay * this.reconnectAttempts)
@@ -99,7 +95,7 @@ class WebSocketConnection {
 }
 
 const getSocket = async (roomId: string): Promise<WebSocketConnection> => {
-  const wsUrl = import.meta.env.VITE_BASE_URL?.replace('http', 'ws') || "ws://localhost:10000"
+  const wsUrl = (import.meta.env.VITE_BASE_URL || "http://localhost:10000").replace(/^http/, "ws")
   const socket = new WebSocketConnection(`${wsUrl}/ws`)
   await socket.connect()
   return socket
