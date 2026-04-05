@@ -49,6 +49,14 @@ const Room = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   const avatarKey = "avatarSeeds"
+  const shortId = () => {
+    try {
+      // crypto.randomUUID is supported on modern browsers
+      return (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)).replace(/-/g, "").slice(0, 6)
+    } catch {
+      return Math.random().toString(36).slice(2, 8)
+    }
+  }
   const getAvatarUrl = (id: string) => {
     try {
       const saved = localStorage.getItem(avatarKey)
@@ -57,9 +65,9 @@ const Room = () => {
         map[id] = id
         localStorage.setItem(avatarKey, JSON.stringify(map))
       }
-      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(map[id])}`
+      return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(map[id])}`
     } catch {
-      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(id)}`
+      return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(id)}`
     }
   }
 
@@ -277,13 +285,13 @@ const Room = () => {
     let socket: WebSocketConn | null = null
 
     const initializeRoom = async () => {
-      let storedName = localStorage.getItem("userName")
-      if (!storedName) {
-        storedName = window.prompt("Enter your name", `Guest-${Math.floor(Math.random() * 1000)}`) || `Guest-${Math.floor(Math.random() * 1000)}`
-        localStorage.setItem("userName", storedName)
-      }
-      setUserName(storedName)
-      const localAvatar = localStorage.getItem("userAvatar") || `https://api.dicebear.com/9.x/avataaars/svg?seed=${storedName}`
+      const saved = localStorage.getItem("userName")
+      const shouldReuse = saved && !saved.startsWith("Guest-")
+      const generated = `Guest-${shortId()}`
+      const chosenName = shouldReuse ? saved! : generated
+      if (!shouldReuse) localStorage.setItem("userName", chosenName)
+      setUserName(chosenName)
+      const localAvatar = localStorage.getItem("userAvatar") || `https://api.dicebear.com/9.x/avataaars/svg?seed=${chosenName}`
       setAvatar(localAvatar)
       localStorage.setItem("userAvatar", localAvatar)
 
@@ -416,7 +424,7 @@ const Room = () => {
           setParticipantAvatars(prev => ({ ...avatarMap, ...prev }))
         })
 
-        activeSocket.emit("join", { roomId, name: storedName })
+        activeSocket.emit("join", { roomId, name: chosenName })
       } catch (error) {
         console.error("Failed to connect:", error)
         alert("Failed to connect to server. Please try again.")

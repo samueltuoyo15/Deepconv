@@ -91,7 +91,6 @@ export const useRoomStore = create<RoomStore>((set) => ({
 
   isChatOpen: false,
   setIsChatOpen: (val) => set(state => ({ isChatOpen: typeof val === 'function' ? val(state.isChatOpen) : val })),
-
   isChatMinimized: false,
   setIsChatMinimized: (isChatMinimized) => set({ isChatMinimized }),
 

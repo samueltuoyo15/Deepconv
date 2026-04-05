@@ -94,8 +94,9 @@ class WebSocketConnection {
   }
 }
 
-const getSocket = async (roomId: string): Promise<WebSocketConnection> => {
-  const wsUrl = (import.meta.env.VITE_BASE_URL || "http://localhost:10000").replace(/^http/, "ws")
+const getSocket = async (_roomId: string): Promise<WebSocketConnection> => {
+  const base = import.meta.env.VITE_BASE_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:10000")
+  const wsUrl = base.replace(/^http/, "ws")
   const socket = new WebSocketConnection(`${wsUrl}/ws`)
   await socket.connect()
   return socket

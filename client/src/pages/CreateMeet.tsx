@@ -11,7 +11,7 @@ const CreateMeet = () => {
   const modalRef = useRef<HTMLDivElement>(null)
 
   const toggleCreateNewMeeting = () => {
-    const newRoomId = Math.random().toString(36).slice(2, 7)
+    const newRoomId = Math.random().toString(36).slice(2, 7).toLowerCase()
     setRoomId(newRoomId)
     setIsCreateNewMeeting(true)
   }

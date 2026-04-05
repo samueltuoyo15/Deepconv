@@ -9,17 +9,6 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
 
   if (!isChatOpen) return null
 
-  if (isChatMinimized) {
-    return (
-      <div className="absolute bottom-32 md:bottom-36 right-4 bg-[#1c1c1c] border border-[#333] rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl z-40 cursor-pointer hover:bg-[#2a2a2a] transition-colors" onClick={() => setIsChatMinimized(false)}>
-         <span className="text-white text-sm font-semibold flex items-center gap-2">
-            Team Chat <span className="bg-[#0B5CFF] text-[10px] rounded-full px-2 py-0.5">{messages.length}</span>
-         </span>
-         <button className="text-[#a0a0a0] hover:text-white" onClick={(e) => { e.stopPropagation(); setIsChatOpen(false) }}><X size={16}/></button>
-      </div>
-    )
-  }
-
   const renderTextWithLinks = (text: string) => {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     return text.split(urlPattern).map((part, i) => {
@@ -52,17 +41,12 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
 
   return (
     <div className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[22rem] md:w-80 lg:w-[21rem] bg-[#1c1c1c]/95 backdrop-blur-3xl rounded-xl p-4 md:p-5 flex flex-col border border-[#333] z-40 shadow-2xl animate-slide-up" style={{ top: '5.5rem', bottom: '9rem', maxHeight: 'calc(100vh - 14.5rem)', height: 'calc(100vh - 14.5rem)' }}>
-      <div className="flex justify-between items-center mb-4 md:mb-6 pl-2 pr-1 shrink-0">
-        <h3 className="font-extrabold text-lg md:text-xl tracking-tight text-white">Room Chat</h3>
-        <div className="flex items-center gap-2">
-           <button onClick={() => setIsChatMinimized(true)} className="text-[#a0a0a0] hover:text-white bg-[#2a2a2a] p-2 rounded-full transition-colors">
-             <Minimize2 size={16} />
-           </button>
-           <button onClick={() => setIsChatOpen(false)} className="text-[#a0a0a0] hover:text-white bg-[#2a2a2a] p-2 rounded-full transition-colors">
-             <X size={16} />
-           </button>
+        <div className="flex justify-between items-center mb-4 md:mb-6 pl-2 pr-1 shrink-0">
+          <h3 className="font-extrabold text-lg md:text-xl tracking-tight text-white">Room Chat</h3>
+          <button onClick={() => setIsChatOpen(false)} className="text-[#a0a0a0] hover:text-white bg-[#2a2a2a] p-2 rounded-full transition-colors">
+            <X size={16} />
+          </button>
         </div>
-      </div>
       
       <div className="flex-1 overflow-y-auto flex flex-col gap-3 mb-4 scrollbar-hide pr-2 min-h-0">
         {messages.length === 0 && (
