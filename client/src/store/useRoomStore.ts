@@ -35,6 +35,9 @@ interface RoomStore {
   handRaises: Record<string, boolean>;
   setHandRaises: (val: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void;
 
+  videoStates: Record<string, boolean>;
+  setVideoStates: (val: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void;
+
   messages: Message[];
   setMessages: (val: Message[] | ((prev: Message[]) => Message[])) => void;
   
@@ -85,6 +88,9 @@ export const useRoomStore = create<RoomStore>((set) => ({
 
   handRaises: {},
   setHandRaises: (val) => set(state => ({ handRaises: typeof val === 'function' ? val(state.handRaises) : val })),
+
+  videoStates: {},
+  setVideoStates: (val) => set(state => ({ videoStates: typeof val === 'function' ? val(state.videoStates) : val })),
 
   messages: [],
   setMessages: (val) => set(state => ({ messages: typeof val === 'function' ? val(state.messages) : val })),

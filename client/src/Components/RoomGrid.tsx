@@ -214,7 +214,7 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
         muted
         className={`w-full h-full object-cover ${(!isVideoOn && !isScreenSharing) ? 'hidden' : ''} ${popoutStates['local'] ? 'pointer-events-none' : ''}`}
       />
-      {!isVideoOn && !isScreenSharing && (
+      {(!isVideoOn && !isScreenSharing) && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#1c1c1c]">
           <img src={avatar || `https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=you`} alt="Avatar" className="w-24 h-24 rounded-full shadow-2xl border-4 border-[#333]" />
         </div>
@@ -303,9 +303,15 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
                   playsInline
                   className={`w-full h-full object-cover ${popoutStates[id] ? 'pointer-events-none' : ''}`}
                 />
-                <div className={`absolute inset-0 flex items-center justify-center bg-[#1c1c1c]`}>
-                  <img src={participantAvatars[id] || `https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=${id}`} alt="avatar" className="w-20 h-20 rounded-full border-4 border-[#333] shadow-xl" />
-                </div>
+                {(() => {
+                  const src = remoteVideosRef.current[id]?.srcObject as MediaStream | null
+                  const hasVideo = src ? src.getVideoTracks().some(t => t.enabled && t.readyState === "live") : false
+                  return !hasVideo ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#1c1c1c]">
+                      <img src={participantAvatars[id] || `https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=${id}`} alt="avatar" className="w-20 h-20 rounded-full border-4 border-[#333] shadow-xl" />
+                    </div>
+                  ) : null
+                })()}
                 {handRaises[id] && (
                   <div className="absolute top-4 right-4 bg-[#1c1c1c]/80 backdrop-blur-sm p-2 rounded-xl text-yellow-500 shadow-lg border border-[#333] animate-pulse pointer-events-none">
                     <Hand size={24} fill="currentColor" />
