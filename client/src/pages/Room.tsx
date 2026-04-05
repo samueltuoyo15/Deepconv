@@ -17,6 +17,10 @@ const Room = () => {
     navigate("/")
     return null
   }
+  if (!/^[a-z0-9]{5}$/i.test(roomId)) {
+    navigate("/meet/new")
+    return null
+  }
 
   const {
     participantCount,
@@ -57,19 +61,12 @@ const Room = () => {
       return Math.random().toString(36).slice(2, 8)
     }
   }
-  const getAvatarUrl = (id: string) => {
-    try {
-      const saved = localStorage.getItem(avatarKey)
-      const map = saved ? JSON.parse(saved) as Record<string, string> : {}
-      if (!map[id]) {
-        map[id] = id
-        localStorage.setItem(avatarKey, JSON.stringify(map))
-      }
-      return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(map[id])}`
-    } catch {
-      return `https://api.dicebear.com/9.x/adventurer-neutral/svg?seed=${encodeURIComponent(id)}`
-    }
+  const hashSeed = (val: string) => {
+    let h = 0
+    for (let i = 0; i < val.length; i++) h = Math.imul(31, h) + val.charCodeAt(i) | 0
+    return Math.abs(h).toString(36)
   }
+  const getAvatarUrl = (id: string) => `https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=${encodeURIComponent(hashSeed(id).slice(0, 12))}`
 
   const setupMediaDevices = async () => {
     try {
@@ -84,6 +81,8 @@ const Room = () => {
       // start with camera off by default
       streamRef.current.getVideoTracks().forEach(t => (t.enabled = false))
       useRoomStore.getState().setIsVideoOn(false)
+      // ensure mic starts unmuted
+      streamRef.current.getAudioTracks().forEach(t => (t.enabled = true))
     } catch (err) {
       console.error(err)
     }
@@ -291,9 +290,8 @@ const Room = () => {
       const chosenName = shouldReuse ? saved! : generated
       if (!shouldReuse) localStorage.setItem("userName", chosenName)
       setUserName(chosenName)
-      const localAvatar = localStorage.getItem("userAvatar") || `https://api.dicebear.com/9.x/avataaars/svg?seed=${chosenName}`
+      const localAvatar = getAvatarUrl(chosenName)
       setAvatar(localAvatar)
-      localStorage.setItem("userAvatar", localAvatar)
 
       await setupMediaDevices()
       if (ignore) return

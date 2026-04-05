@@ -77,8 +77,14 @@ const RoomControls = ({ toggleMic, toggleVideo, toggleScreenShare, toggleHandRai
         
         <div className="w-px h-5 sm:h-6 md:h-8 bg-[#333] mx-0.5 sm:mx-1"></div>
         
-        <button onClick={() => navigate("/")} className="px-3 sm:px-4 md:px-5 lg:px-6 py-2.5 sm:py-3 md:py-3.5 lg:py-4 rounded-[1.5rem] bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg flex items-center justify-center shrink-0">
-           <PhoneMissed size={16} className="sm:w-[18px] sm:h-[18px] md:w-5 md:h-5 lg:w-[22px] lg:h-[22px]" fill="currentColor" />
+        <button
+          onClick={() => {
+            const sure = window.confirm("End call for this tab?")
+            if (sure) navigate("/")
+          }}
+          className="px-3 sm:px-4 md:px-5 lg:px-6 py-2.5 sm:py-3 md:py-3.5 lg:py-4 rounded-[1.5rem] bg-red-500 hover:bg-red-600 text-white transition-all shadow-lg flex items-center justify-center shrink-0"
+        >
+          <PhoneMissed size={16} className="sm:w-[18px] sm:h-[18px] md:w-5 md:h-5 lg:w-[22px] lg:h-[22px]" fill="currentColor" />
         </button>
       </div>
     </footer>
