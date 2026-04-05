@@ -10,12 +10,14 @@ type Props = {
 const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
   const { 
     userName, 
+    avatar,
     isMicOn, 
     isVideoOn, 
     isScreenSharing, 
     isHandRaised, 
     participantIds, 
     participantNames, 
+    participantAvatars,
     handRaises,
     popoutStates,
     setPopoutStates,
@@ -214,7 +216,7 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
       />
       {!isVideoOn && !isScreenSharing && (
         <div className="absolute inset-0 flex items-center justify-center bg-[#1c1c1c]">
-          <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="Avatar" className="w-32 h-32 rounded-full shadow-2xl border-4 border-[#333]" />
+          <img src={avatar || `https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="Avatar" className="w-32 h-32 rounded-full shadow-2xl border-4 border-[#333]" />
         </div>
       )}
       {isScreenSharing && (
@@ -229,7 +231,7 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
       )}
       <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
         <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333] text-white">
-          <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
+          <img src={avatar || `https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
           <span>{userName} (You)</span>
           {!isMicOn && <MicOff size={14} className="text-red-400"/>}
         </div>
@@ -251,7 +253,7 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
         className="flex-1 flex items-center justify-center transition-all overflow-hidden"
         style={{
           paddingTop: '5rem',
-          paddingBottom: '7rem',
+          paddingBottom: '9rem',
           paddingLeft: '1rem',
           paddingRight: isChatOpen ? 'clamp(1rem, 22rem, 22rem)' : '1rem'
         }}
@@ -308,7 +310,7 @@ const RoomGrid = ({ videoRef, remoteVideosRef }: Props) => {
                 )}
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
                   <div className="bg-[#121212]/80 backdrop-blur-md pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg border border-[#333] text-white">
-                    <img src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${participantNames[id] || id}&backgroundColor=2a2a2a`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
+                    <img src={participantAvatars[id] || `https://api.dicebear.com/9.x/avataaars/svg?seed=${id}&backgroundColor=2a2a2a`} alt="avatar" className="w-6 h-6 rounded-full bg-[#2a2a2a]" />
                     <span>{participantNames[id] || "Participant"}</span>
                   </div>
                 </div>

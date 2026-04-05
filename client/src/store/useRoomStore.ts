@@ -11,6 +11,8 @@ type Message = {
 interface RoomStore {
   userName: string;
   setUserName: (name: string) => void;
+  avatar: string;
+  setAvatar: (url: string) => void;
   
   isMicOn: boolean;
   setIsMicOn: (val: boolean) => void;
@@ -25,6 +27,8 @@ interface RoomStore {
   
   participantNames: Record<string, string>;
   setParticipantNames: (val: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  participantAvatars: Record<string, string>;
+  setParticipantAvatars: (val: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
   
   isHandRaised: boolean;
   setIsHandRaised: (val: boolean) => void;
@@ -56,11 +60,13 @@ interface RoomStore {
 export const useRoomStore = create<RoomStore>((set) => ({
   userName: "",
   setUserName: (userName) => set({ userName }),
+  avatar: "",
+  setAvatar: (avatar) => set({ avatar }),
 
   isMicOn: true,
   setIsMicOn: (isMicOn) => set({ isMicOn }),
   
-  isVideoOn: true,
+  isVideoOn: false,
   setIsVideoOn: (isVideoOn) => set({ isVideoOn }),
 
   participantCount: 1,
@@ -71,6 +77,8 @@ export const useRoomStore = create<RoomStore>((set) => ({
 
   participantNames: {},
   setParticipantNames: (val) => set(state => ({ participantNames: typeof val === 'function' ? val(state.participantNames) : val })),
+  participantAvatars: {},
+  setParticipantAvatars: (val) => set(state => ({ participantAvatars: typeof val === 'function' ? val(state.participantAvatars) : val })),
 
   isHandRaised: false,
   setIsHandRaised: (isHandRaised) => set({ isHandRaised }),

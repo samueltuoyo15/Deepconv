@@ -1,72 +1,96 @@
-import { useState } from "react"
-import { ArrowLeft } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { ArrowLeft, KeyRound, MonitorPlay } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
-const JoinMeet = ({ toggle, setToggle, }: {  toggle: boolean 
-  setToggle: React.Dispatch<React.SetStateAction<boolean>>
-}) => {
+const JoinMeet = ({ toggle, setToggle }: { toggle: boolean, setToggle: React.Dispatch<React.SetStateAction<boolean>> }) => {
   const [input, setInput] = useState("")
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = () => {
-    if (!input.trim()) return setError("Please enter a valid code")
-    if (!input.startsWith("meet-"))
-      return setError("Meeting does not exist, please check and try again")
-    navigate(`/meet/room/${input}`)
+  useEffect(() => {
+    if (toggle) {
+      setTimeout(() => inputRef.current?.focus(), 100)
+    } else {
+      setInput("")
+      setError(null)
+    }
+  }, [toggle])
+
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!input.trim()) return setError("Please enter a strictly valid code")
+    navigate(`/meet/room/${input.trim()}`)
   }
 
   return (
     <>
       <div 
-          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity ${toggle ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`fixed inset-0 bg-black/60 backdrop-blur-md z-40 transition-all duration-300 ${toggle ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           onClick={() => setToggle(false)}
       />
       
       {toggle && (
         <section
-          className={`fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 p-8 ${
+          className={`fixed top-0 right-0 z-50 h-full w-full max-w-md bg-[#0F1219] border-l border-[#2B3142] shadow-[auto_0_80px_rgba(0,0,0,0.8)] transition-transform duration-400 ease-in-out flex flex-col ${
             toggle ? "translate-x-0" : "translate-x-full"
           }`}
         >
-          <header className="flex justify-between items-center mb-12">
-            <div className="flex items-center text-2xl font-extrabold text-gray-900 tracking-tight">
-              <div className="bg-gray-100 p-2 rounded-full cursor-pointer hover:bg-gray-200 transition mr-4" onClick={() => setToggle((prev) => !prev)}>
-                <ArrowLeft size={24} />
-              </div>
-              <span>Join with code</span>
-            </div>
+          <header className="flex items-center px-8 pt-10 pb-6 border-b border-[#212634]">
+            <button className="bg-[#1A1F2D] hover:bg-[#212736] text-[#A0AAB2] hover:text-white p-2.5 rounded-xl transition-colors shrink-0 mr-4 border border-[#2B3142]" onClick={() => setToggle(false)}>
+              <ArrowLeft size={22} />
+            </button>
+            <h2 className="text-2xl font-black text-white tracking-tight">Join Meeting</h2>
           </header>
 
-          <div className="text-gray-900 font-sans">
-            <label htmlFor="input" className="text-lg block mb-6 font-medium text-gray-500">
-              Enter the meeting code or ID provided by the organizer to jump right in.
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col px-8 py-10 overflow-y-auto">
+            <div className="flex justify-center mb-10">
+               <div className="w-20 h-20 bg-[#1A1F2D] border border-[#2B3142] rounded-3xl flex items-center justify-center shadow-inner relative">
+                  <div className="absolute inset-0 bg-[#0B5CFF]/10 rounded-3xl blur-md"></div>
+                  <MonitorPlay size={32} className="text-[#0B5CFF] relative z-10" />
+               </div>
+            </div>
+
+            <label htmlFor="input" className="text-[15px] block mb-4 font-semibold text-[#8490A0] text-center">
+              Enter the meeting code or ID provided by the organizer to secure your connection.
             </label>
-            <input
-              type="text"
-              id="input"
-              name="input"
-              placeholder="e.g. meet-aa0e3bd7-..."
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value)
-                setError(null)
-              }}
-              className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-200 text-gray-900 font-medium focus:outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition-all shadow-inner"
-            />
-            {error && <p className="text-red-500 mt-3 font-semibold text-sm bg-red-50 p-3 rounded-xl border border-red-100">{error}</p>}
+
+            <div className="relative group w-full mb-3">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#5F6780] group-focus-within:text-[#0B5CFF] transition-colors">
+                   <KeyRound size={20} />
+                </div>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  id="input"
+                  name="input"
+                  placeholder="meet-aa0e3bd7..."
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value)
+                    setError(null)
+                  }}
+                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-[#11141D] border border-[#2B3142] text-white font-mono text-lg focus:outline-none focus:ring-2 focus:ring-[#0B5CFF]/40 focus:border-[#0B5CFF] transition-all placeholder-[#5F6780]"
+                />
+            </div>
+
+            {error && <div className="text-[#FF4D4D] font-medium text-sm bg-[#FF4D4D]/10 px-4 py-3 rounded-lg border border-[#FF4D4D]/20 animate-pulse">{error}</div>}
+
+            <div className="flex-1" />
 
             <button
-              className={`mt-8 w-full py-4 px-6 rounded-full font-bold text-lg transition-all ${
-                !input || error 
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
-                  : "bg-green-500 text-white hover:bg-green-600 shadow-[0_8px_30px_rgb(34,197,94,0.3)] hover:scale-105"
+              type="submit"
+              disabled={!input.trim() || !!error}
+              className={`mt-8 w-full py-4 px-6 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${
+                !input.trim() || error 
+                  ? "bg-[#1A1F2D] text-[#5F6780] cursor-not-allowed border border-[#212634]" 
+                  : "bg-[#0B5CFF] text-white hover:bg-[#1A6DFF] shadow-[0_4px_20px_rgba(11,92,255,0.3)] hover:-translate-y-0.5"
               }`}
-              onClick={input && !error ? handleSubmit : undefined}
             >
-              Join Meeting
+              <span>Join Session</span>
+              <ArrowLeft size={18} className="rotate-180" />
             </button>
-          </div>
+          </form>
         </section>
       )}
     </>

@@ -3,7 +3,7 @@ import { Send, Paperclip, Minimize2, X } from 'lucide-react'
 import { useRoomStore } from '../store/useRoomStore'
 
 const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => {
-  const { messages, setMessages, isChatOpen, setIsChatOpen, isChatMinimized, setIsChatMinimized, participantNames } = useRoomStore()
+  const { messages, setMessages, isChatOpen, setIsChatOpen, isChatMinimized, setIsChatMinimized, participantNames, participantAvatars, avatar } = useRoomStore()
   const [currentMessage, setCurrentMessage] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -11,7 +11,7 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
 
   if (isChatMinimized) {
     return (
-      <div className="absolute bottom-28 md:bottom-32 right-4 bg-[#1c1c1c] border border-[#333] rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl z-40 cursor-pointer hover:bg-[#2a2a2a] transition-colors" onClick={() => setIsChatMinimized(false)}>
+      <div className="absolute bottom-32 md:bottom-36 right-4 bg-[#1c1c1c] border border-[#333] rounded-full px-4 py-2 flex items-center gap-3 shadow-2xl z-40 cursor-pointer hover:bg-[#2a2a2a] transition-colors" onClick={() => setIsChatMinimized(false)}>
          <span className="text-white text-sm font-semibold flex items-center gap-2">
             Team Chat <span className="bg-[#0B5CFF] text-[10px] rounded-full px-2 py-0.5">{messages.length}</span>
          </span>
@@ -51,7 +51,7 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
   }
 
   return (
-    <div className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[22rem] md:w-80 lg:w-[21rem] bg-[#1c1c1c]/95 backdrop-blur-3xl rounded-xl p-4 md:p-5 flex flex-col border border-[#333] z-40 shadow-2xl animate-slide-up" style={{ top: '6rem', bottom: '7rem', maxHeight: 'calc(100vh - 13rem)', height: 'calc(100vh - 13rem)' }}>
+    <div className="fixed right-4 w-[calc(100vw-2rem)] sm:w-[22rem] md:w-80 lg:w-[21rem] bg-[#1c1c1c]/95 backdrop-blur-3xl rounded-xl p-4 md:p-5 flex flex-col border border-[#333] z-40 shadow-2xl animate-slide-up" style={{ top: '5.5rem', bottom: '9rem', maxHeight: 'calc(100vh - 14.5rem)', height: 'calc(100vh - 14.5rem)' }}>
       <div className="flex justify-between items-center mb-4 md:mb-6 pl-2 pr-1 shrink-0">
         <h3 className="font-extrabold text-lg md:text-xl tracking-tight text-white">Room Chat</h3>
         <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ const RoomChat = ({ socketRef, roomId }: { socketRef: any, roomId: string }) => 
           >
             <div className="flex justify-between items-end gap-3 mb-2">
               <div className="flex items-center gap-1.5">
-                <img src={msg.sender === "You" ? `https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF` : `https://api.dicebear.com/9.x/avataaars/svg?seed=${participantNames[msg.sender] || msg.sender}&backgroundColor=2a2a2a`} alt="avatar" className="w-5 h-5 rounded-full" />
+                <img src={msg.sender === "You" ? avatar || `https://api.dicebear.com/9.x/avataaars/svg?seed=You&backgroundColor=0B5CFF` : (participantAvatars[msg.sender] || `https://api.dicebear.com/9.x/avataaars/svg?seed=${participantNames[msg.sender] || msg.sender}&backgroundColor=2a2a2a`)} alt="avatar" className="w-5 h-5 rounded-full" />
                 <span className={`text-xs block font-bold truncate ${msg.sender === "You" ? "opacity-90 text-white" : "text-[#a0a0a0]"}`}>
                   {msg.sender === "You" ? "You" : (participantNames[msg.sender] || "Participant")}
                 </span>

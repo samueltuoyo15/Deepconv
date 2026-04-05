@@ -23,9 +23,11 @@ const Room = () => {
     setParticipantCount,
     setParticipantIds,
     setParticipantNames,
+    setParticipantAvatars,
     setHandRaises,
     setMessages,
     setUserName,
+    setAvatar,
     setIsScreenSharing,
     setIsRecording
   } = useRoomStore()
@@ -46,6 +48,21 @@ const Room = () => {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
+  const avatarKey = "avatarSeeds"
+  const getAvatarUrl = (id: string) => {
+    try {
+      const saved = localStorage.getItem(avatarKey)
+      const map = saved ? JSON.parse(saved) as Record<string, string> : {}
+      if (!map[id]) {
+        map[id] = id
+        localStorage.setItem(avatarKey, JSON.stringify(map))
+      }
+      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(map[id])}`
+    } catch {
+      return `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(id)}`
+    }
+  }
+
   const setupMediaDevices = async () => {
     try {
       const preferredMic = localStorage.getItem('preferredMic') || undefined
@@ -56,6 +73,9 @@ const Room = () => {
       }
       streamRef.current = await navigator.mediaDevices.getUserMedia(constraints)
       if (videoRef.current) videoRef.current.srcObject = streamRef.current
+      // start with camera off by default
+      streamRef.current.getVideoTracks().forEach(t => (t.enabled = false))
+      useRoomStore.getState().setIsVideoOn(false)
     } catch (err) {
       console.error(err)
     }
@@ -138,6 +158,7 @@ const Room = () => {
     }
 
     try {
+      const includeAudio = window.confirm("Include microphone/meeting audio in the recording?")
       const canvas = document.createElement('canvas')
       canvas.width = 1280
       canvas.height = 720
@@ -172,8 +193,14 @@ const Room = () => {
       drawFrame()
 
       const canvasStream = canvas.captureStream(30)
-      if (streamRef.current) {
-        streamRef.current.getAudioTracks().forEach(t => canvasStream.addTrack(t))
+      if (includeAudio) {
+        if (streamRef.current) {
+          streamRef.current.getAudioTracks().forEach(t => canvasStream.addTrack(t))
+        }
+        Object.values(remoteVideosRef.current).forEach(v => {
+          const s = v.srcObject as MediaStream | null
+          s?.getAudioTracks().forEach(t => canvasStream.addTrack(t))
+        })
       }
 
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
@@ -237,6 +264,8 @@ const Room = () => {
       const remoteVideo = remoteVideosRef.current[peerId]
       if (remoteVideo && e.streams[0]) {
         remoteVideo.srcObject = e.streams[0]
+        remoteVideo.muted = false
+        remoteVideo.play?.().catch(() => {})
       }
     }
 
@@ -254,6 +283,9 @@ const Room = () => {
         localStorage.setItem("userName", storedName)
       }
       setUserName(storedName)
+      const localAvatar = localStorage.getItem("userAvatar") || `https://api.dicebear.com/9.x/avataaars/svg?seed=${storedName}`
+      setAvatar(localAvatar)
+      localStorage.setItem("userAvatar", localAvatar)
 
       await setupMediaDevices()
       if (ignore) return
@@ -273,9 +305,14 @@ const Room = () => {
           setParticipantCount(users.length + 1)
           const ids = users.map(u => u.id)
           const nameMap: Record<string, string> = {}
-          users.forEach(u => nameMap[u.id] = u.name)
+          const avatarMap: Record<string, string> = {}
+          users.forEach(u => {
+            nameMap[u.id] = u.name
+            avatarMap[u.id] = getAvatarUrl(u.id)
+          })
           setParticipantIds(ids)
           setParticipantNames(prev => ({ ...prev, ...nameMap }))
+          setParticipantAvatars(prev => ({ ...prev, ...avatarMap }))
           users.forEach(async (user) => {
             const pc = createPeerConnection(user.id)
             peerConnections.current.set(user.id, pc)
@@ -289,6 +326,7 @@ const Room = () => {
           setParticipantCount(prev => prev + 1)
           setParticipantIds(prev => [...prev, user.id])
           setParticipantNames(prev => ({ ...prev, [user.id]: user.name }))
+          setParticipantAvatars(prev => ({ ...prev, [user.id]: getAvatarUrl(user.id) }))
         })
 
         activeSocket.on("offer", async ({ from, offer }: { from: string; offer: RTCSessionDescriptionInit }) => {
@@ -371,6 +409,11 @@ const Room = () => {
             fileName: msg.fileName
           }))
           setMessages(formattedHistory)
+          const avatarMap: Record<string, string> = {}
+          history.forEach(msg => {
+            avatarMap[msg.from] = getAvatarUrl(msg.from)
+          })
+          setParticipantAvatars(prev => ({ ...avatarMap, ...prev }))
         })
 
         activeSocket.emit("join", { roomId, name: storedName })
